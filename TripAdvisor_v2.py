@@ -8,14 +8,31 @@ import time
 import re
 
 os.chdir('D:\\modules\\Exsell\\Exsell_Programming') # Your working directory
-df = pd.read_csv('citylinks.csv') # The file I shared you
+df = pd.read_csv('citylinks.csv') # The file in which link of eacht city of Netherlands exist and is used in main body of code
 
 
+##In this function, list of HTML taged data will be scraped
 def res_info(res_url, name):
+    '''
+    name of HTML tags are clear that which part of each link will be extracted. 
+    Just FYI:
+    status is "Claimed", "Unclaimed" label which the clue of ongoing business.
+    pricestatus is the range of price.
+    rating is the general rating & subcat is rating for subcategories such as food, atmosphere,etc.
+    reviews is the number of reviews are recorded in TripAdvisor.
+    detail includes the price range, cuisine & special diet.
+    Thuisbezorgd is a True flag if the restaurant has delivery option by Thuisbezorgd.
+    TheFork is a True flag if the resuarant has the reserving table option by TheFork
+    '''
     column_names=['Name','TripAdvisorLink','status','pricestatus','adress','city','phone','email','website','rating','reviews','subcat','detail','Thuisbezorgd','TheFork']
     res_info=pd.DataFrame(columns=column_names)
     user_agent_old_phone = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
     res_header={'User-Agent': user_agent_old_phone}
+    '''
+    by sending too many requests to TripAdvisor website, after a while it will be disconnected. 
+    So below try except code is used for sleeping the running code without exiting the running
+     process and then again sending reuqest.
+    ''' 
     results_res = ''
     while results_res == '':
         try:
@@ -81,12 +98,22 @@ def res_info(res_url, name):
     print("details done")
     return res_info
 
-
+##I nthis function, Javascript taged data will be scraped
 def res_website(res_url):
+    '''
+    Inthis function two JavaScript taged data will be extracted including:
+    Website : the website of related restaurant
+    email : contact email of that restaurant
+    '''
     column_names=['Name','TripAdvisorLink','website','email']
     user_agent_old_phone = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/76.0.3809.132 Safari/537.36'
     res_header={'User-Agent': user_agent_old_phone}
     res_web=pd.DataFrame(columns=column_names)
+    '''
+    by sending too many requests to TripAdvisor website, after a while it will be disconnected. 
+    So below try except code is used for sleeping the running code without exiting the running
+     process and then again sending reuqest.
+    '''
     results_res = ''
     while results_res == '':
         try:
@@ -125,22 +152,27 @@ def res_website(res_url):
 df1 = pd.DataFrame()
 df2 = pd.DataFrame()
 counter = 0
-links = df.iloc[9:10,1].to_list() # change the numbers to 10:12
-name = df.iloc[9:10,0].to_list() # change the numbers to 10:12
-pages = df.iloc[9:10,2].to_list() # change the numbers to 10:12
+###Reading records of CityLink.csv file which is the link of each city in Netherlands
+links = df.iloc[1:1570,1].to_list() 
+name = df.iloc[1:1570,0].to_list() 
+pages = df.iloc[1:1570,2].to_list() 
+##by below code the chrome browser will open & stay until the end of running, just refreshing for each restaurant
 driver = webdriver.Chrome('C:\\chromedriver_win32\\chromedriver.exe')
 for i in range(len(links)):
     for j in range(pages[i]):
+        ##autamatically generating the link of each 30 restaurants by below code (since 30 restaurants in each page are listed)
         url = 'https://www.tripadvisor.com/Restaurants' +links[i][39:48] +'oa' + str(30 * j) + links[i][47:] + '#EATERY_LIST_CONTENTS'
         results = requests.get(url)
         soup = BeautifulSoup(results.text, "html.parser")
         for sec in soup.find_all('div', class_="_1llCuDZj"):
+            ##cleaning the links of each restaurant by below codes (removing redundant characters) 
             a_link = re.findall('<a class="_15_ydu6b".+?</a>', str(sec))
             b_link = re.sub(r'<a class="_15_ydu6b" href="', '', str(a_link), flags=re.MULTILINE)
             c_link = re.sub(r'" target="_blank">.+?</a>', '', str(b_link), flags=re.MULTILINE)
             d_link = 'https://www.tripadvisor.com' + c_link.replace("'", "").replace("[", "").replace("]", "")
             counter = counter + 1
             print(counter,'  ',d_link)
+            ##calling below functions with cleaned restaurant link & name of the city
             df1 = df1.append(res_info(d_link, str(name[i])))
             df2 = df2.append(res_website(d_link))
 
