@@ -1,4 +1,4 @@
-## TripAdvisor scraper   
+## TripAdvisor scraper for whole Netherlands   
 A TripAdvisor scraper app, that will help you to scrape all the details about restaurants in the Netherlands.
 The details include Name, Location, Rating, No.of reviews, Cuisine type, Website of the restaurant, Email, Phone number, etc.   
 The python packages used to scrape are **BeautifulSoup and Selenium**. 
